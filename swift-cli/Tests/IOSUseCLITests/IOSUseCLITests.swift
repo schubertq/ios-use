@@ -116,6 +116,18 @@ final class IOSUseCLITests: XCTestCase {
         XCTAssertTrue(swipe.stderr.isEmpty)
     }
 
+    func testRotateParsesSupportedOrientationAndRejectsInvalidValue() throws {
+        let parsed = try CLIParser.parse(["rotate", "--to", "landscape-right", "--dom", "100"])
+        guard case .driver(.rotate(let orientation, let postDom)) = parsed else {
+            return XCTFail("expected rotate driver action")
+        }
+        XCTAssertEqual(orientation, .landscapeRight)
+        XCTAssertEqual(postDom, .afterMilliseconds(100))
+
+        XCTAssertThrowsError(try CLIParser.parse(["rotate", "--to", "diagonal"]))
+        XCTAssertThrowsError(try CLIParser.parse(["rotate"]))
+    }
+
     func testDebugHelpExplainsExistingInputStreamJSONAndResetContract() {
         let result = IOSUseCLI().run(arguments: ["debug", "--help"])
 
@@ -2415,6 +2427,37 @@ final class IOSUseCLITests: XCTestCase {
         XCTAssertTrue(result.stdout.contains("- Ready [Text] (1,2,3,4)"))
     }
 
+    func testRotateReturnsVerifiedOrientationInJSON() throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("ios-use-rotate-\(UUID().uuidString)")
+            .path
+        let paths = IOSUsePaths.resolve(environment: ["IOS_USE_HOME": root])
+        try writeDriverLock(udid: "SIM-ROTATE", deviceType: "simulator", paths: paths)
+        IOSUseCLI.driverClientFactoryForTesting = { _ in
+            FakeDriverCommandClient(rotateHandler: { orientation in
+                XCTAssertEqual(orientation, .landscapeRight)
+                return ForyRotatePayload(
+                    requestedOrientation: orientation.rawValue,
+                    actualOrientation: orientation.rawValue
+                )
+            })
+        }
+        addTeardownBlock {
+            IOSUseCLI.driverClientFactoryForTesting = nil
+            try? FileManager.default.removeItem(atPath: root)
+        }
+
+        let result = IOSUseCLI(environment: ["IOS_USE_HOME": root]).run(arguments: [
+            "rotate", "--to", "landscape-right", "--json"
+        ])
+
+        XCTAssertEqual(result.exitCode, 0)
+        let envelope = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(result.stdout.utf8)) as? [String: Any])
+        let data = try XCTUnwrap(envelope["data"] as? [String: Any])
+        XCTAssertEqual(data["requestedOrientation"] as? String, "landscape-right")
+        XCTAssertEqual(data["actualOrientation"] as? String, "landscape-right")
+    }
+
     func testMutatingCommandRetriesTransientPostDomAndReturnsTypedJSON() throws {
         let root = FileManager.default.temporaryDirectory
             .appendingPathComponent("ios-use-post-dom-retry-\(UUID().uuidString)")
@@ -3363,8 +3406,9 @@ final class IOSUseCLITests: XCTestCase {
         XCTAssertTrue(commands.contains("dismissAlertByLabel"))
         XCTAssertTrue(commands.contains("waitAppForeground"))
         XCTAssertTrue(commands.contains("mediaImport"))
+        XCTAssertTrue(commands.contains("rotate"))
         XCTAssertFalse(commands.contains("health"))
-        XCTAssertEqual(commands.count, 15)
+        XCTAssertEqual(commands.count, 16)
     }
 
     func testDriverCommandMetadataBindsArgsAndPayloadTypes() {
@@ -3374,6 +3418,9 @@ final class IOSUseCLITests: XCTestCase {
 
         XCTAssertNil(DriverCommand.home.metadata.argsTypeName)
         XCTAssertNil(DriverCommand.home.metadata.payloadTypeName)
+        XCTAssertEqual(DriverCommand.rotate.metadata.argsTypeName, "ForyRotateArgs")
+        XCTAssertEqual(DriverCommand.rotate.metadata.payloadTypeName, "ForyRotatePayload")
+        XCTAssertTrue(DriverCommand.rotate.metadata.mutatesUI)
         XCTAssertEqual(DriverCommand.mediaImport.metadata.argsTypeName, "ForyMediaImportArgs")
         XCTAssertEqual(DriverCommand.mediaImport.metadata.payloadTypeName, "ForyMediaImportPayload")
         XCTAssertFalse(DriverCommand.mediaImport.metadata.mutatesUI)
@@ -4079,6 +4126,7 @@ private final class FakeDriverCommandClient: DriverCommandClient {
     private let waitAppForegroundHandler: (String, Double, Bool) throws -> ForyWaitAppForegroundPayload
     private let mediaImportHandler: (ForyMediaImportArgs) throws -> ForyMediaImportPayload
     private let dismissAlertHandler: (ForyDismissAlertArgs) throws -> ForyAlertPayload
+    private let rotateHandler: (IOSUseDeviceOrientation) throws -> ForyRotatePayload
 
     init(
         domHandler: @escaping (Bool, Bool, Bool) throws -> ForyDomPayload = { _, _, _ in
@@ -4104,6 +4152,9 @@ private final class FakeDriverCommandClient: DriverCommandClient {
         },
         dismissAlertHandler: @escaping (ForyDismissAlertArgs) throws -> ForyAlertPayload = { _ in
             throw CLIParseError.invalidValue("unexpected dismissAlert")
+        },
+        rotateHandler: @escaping (IOSUseDeviceOrientation) throws -> ForyRotatePayload = { _ in
+            throw CLIParseError.invalidValue("unexpected rotate")
         }
     ) {
         self.domHandler = domHandler
@@ -4114,6 +4165,7 @@ private final class FakeDriverCommandClient: DriverCommandClient {
         self.waitAppForegroundHandler = waitAppForegroundHandler
         self.mediaImportHandler = mediaImportHandler
         self.dismissAlertHandler = dismissAlertHandler
+        self.rotateHandler = rotateHandler
     }
 
     func close() {}
@@ -4163,6 +4215,10 @@ private final class FakeDriverCommandClient: DriverCommandClient {
 
     func home() throws {
         throw CLIParseError.invalidValue("unexpected home")
+    }
+
+    func rotate(orientation: IOSUseDeviceOrientation) throws -> ForyRotatePayload {
+        try rotateHandler(orientation)
     }
 
     func dismissAlert(args: ForyDismissAlertArgs) throws -> ForyAlertPayload {

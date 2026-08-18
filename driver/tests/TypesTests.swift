@@ -128,7 +128,7 @@ final class TypesTests: XCTestCase {
     func testCommandRawValues() {
         let cmds: [Command] = [
             .activateApp, .terminateApp, .screenshot,
-            .home, .dom, .tap, .longPress, .input, .swipe, .waitFor,
+            .home, .rotate, .dom, .tap, .longPress, .input, .swipe, .waitFor,
             .proxyCAPush, .dismissAlert, .dismissAlertByLabel,
             .waitAppForeground, .mediaImport,
         ]
@@ -140,6 +140,9 @@ final class TypesTests: XCTestCase {
         XCTAssertEqual(Command.waitAppForeground.metadata.argsTypeName, "ForyWaitAppForegroundArgs")
         XCTAssertEqual(Command.waitAppForeground.metadata.payloadTypeName, "ForyWaitAppForegroundPayload")
         XCTAssertFalse(Command.waitAppForeground.metadata.mutatesUI)
+        XCTAssertEqual(Command.rotate.metadata.argsTypeName, "ForyRotateArgs")
+        XCTAssertEqual(Command.rotate.metadata.payloadTypeName, "ForyRotatePayload")
+        XCTAssertTrue(Command.rotate.metadata.mutatesUI)
         XCTAssertEqual(Command.mediaImport.metadata.argsTypeName, "ForyMediaImportArgs")
         XCTAssertEqual(Command.mediaImport.metadata.payloadTypeName, "ForyMediaImportPayload")
         XCTAssertFalse(Command.mediaImport.metadata.mutatesUI)

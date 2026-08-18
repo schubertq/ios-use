@@ -101,7 +101,7 @@ deletes old caches for you; run `ios-use du` to see what you can remove.
   expired. Refresh before expiry instead of deferring renewal across sessions.
 - Run `start` before `dom`, `ui-tree`, `tap`, `longpress`, `swipe`, `input`, `waitFor`,
   `screenshot`, `capture`, `home`, `dismissAlert`, default `activateApp`,
-  `open --dom`, or device-backed proxy commands.
+  `open --dom`, `rotate`, or device-backed proxy commands.
 - Treat the device selected by `start` as the target for all UI commands. To switch
   devices, run `ios-use stop`, then `ios-use start <new-udid>`.
 - After `start --mac`, supported commands continue using that Mac session until
@@ -194,6 +194,29 @@ ios-use input --tap "搜索" --content "蓝牙"
 - On mutation failure, read the inline target, candidate, rejection, suggestion,
   and alert fields first. Request a fresh `dom` or named `screenshot` only when
   the next decision needs more UI context.
+
+### Rotate a real device or Simulator
+
+Use the CLI/Driver rotation command instead of AssistiveTouch, Settings navigation,
+or coordinate taps:
+
+```bash
+ios-use rotate --to landscape-right --dom --json
+ios-use rotate --to portrait --dom --json
+```
+
+Supported orientations are `portrait`, `portrait-upside-down`, `landscape-left`,
+and `landscape-right`. Treat rotation as successful only when the JSON response
+has `requestedOrientation == actualOrientation` and the returned fresh
+`postDom.windowSize` matches the requested portrait or landscape shape. Continue
+with the App-specific DOM or screenshot assertion; device orientation alone does
+not prove the target layout is correct.
+
+`rotate` requires an active real-device or Simulator Driver and is unavailable on
+the Mac backend. If the command is missing or `status` reports a version mismatch,
+install the matching CLI release, rerun `config` for the target, and restart the
+Driver. Do not fall back to an accessibility floating button or persisted screen
+coordinates.
 
 ## 5. Control Apps and inspect their logs
 
