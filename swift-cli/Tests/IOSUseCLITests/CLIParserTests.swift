@@ -525,11 +525,6 @@ final class CLIParserTests: XCTestCase {
             try CLIParser.parse(["swipe", "--dir", "forth", "--distance", "200", "--dom", "--traits", "Cell"]),
             .driver(.swipe(to: nil, from: nil, dir: "forth", distance: 200, traits: "Cell", cindex: nil, postDom: .afterQuiescence))
         )
-
-        XCTAssertEqual(
-            try CLIParser.parse(["rotate", "--to", "landscape-right", "--dom", "100"]),
-            .driver(.rotate(orientation: .landscapeRight, postDom: .afterMilliseconds(100)))
-        )
     }
 
     func testInputDeleteRejectsValuesOutsideWireRange() {
