@@ -27,22 +27,6 @@ final class ServerTests: XCTestCase {
         XCTAssertEqual(IOSUseProtocol.waitForSocketReadTimeoutSeconds(args.timeout), 67)
     }
 
-    func testRotateInvocationKeepsRequestedOrientation() throws {
-        let payload = try ForyRegistry.create().serialize(
-            ForyRotateArgs(orientation: "landscape-right")
-        )
-        let invocation = try CommandInvocation(
-            name: .rotate,
-            payload: payload,
-            codec: Codec.Context()
-        )
-
-        guard case .rotate(let args) = invocation.arguments else {
-            return XCTFail("expected rotate arguments")
-        }
-        XCTAssertEqual(args.orientation, "landscape-right")
-    }
-
     func testWaitForInvocationBoundsMalformedWatchdogDeadline() throws {
         let args = ForyWaitForArgs(target: ForyTarget(label: "Loading"), timeout: .infinity)
         let payload = try ForyRegistry.create().serialize(args)

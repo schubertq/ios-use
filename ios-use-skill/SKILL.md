@@ -197,26 +197,15 @@ ios-use input --tap "搜索" --content "蓝牙"
 
 ### Rotate a real device or Simulator
 
-Use the CLI/Driver rotation command instead of AssistiveTouch, Settings navigation,
-or coordinate taps:
-
 ```bash
 ios-use rotate --to landscape-right --dom --json
-ios-use rotate --to portrait --dom --json
 ```
 
 Supported orientations are `portrait`, `portrait-upside-down`, `landscape-left`,
-and `landscape-right`. Treat rotation as successful only when the JSON response
-has `requestedOrientation == actualOrientation` and the returned fresh
-`postDom.windowSize` matches the requested portrait or landscape shape. Continue
-with the App-specific DOM or screenshot assertion; device orientation alone does
-not prove the target layout is correct.
-
-`rotate` requires an active real-device or Simulator Driver and is unavailable on
-the Mac backend. If the command is missing or `status` reports a version mismatch,
-install the matching CLI release, rerun `config` for the target, and restart the
-Driver. Do not fall back to an accessibility floating button or persisted screen
-coordinates.
+and `landscape-right`. The command changes the simulated physical orientation;
+an App that supports only portrait can remain portrait. Use `--dom` to inspect the
+resulting App layout. `rotate` requires an active real-device or Simulator Driver
+and is unavailable on the Mac backend.
 
 ## 5. Control Apps and inspect their logs
 

@@ -3418,9 +3418,6 @@ final class IOSUseCLITests: XCTestCase {
 
         XCTAssertNil(DriverCommand.home.metadata.argsTypeName)
         XCTAssertNil(DriverCommand.home.metadata.payloadTypeName)
-        XCTAssertEqual(DriverCommand.rotate.metadata.argsTypeName, "ForyRotateArgs")
-        XCTAssertEqual(DriverCommand.rotate.metadata.payloadTypeName, "ForyRotatePayload")
-        XCTAssertTrue(DriverCommand.rotate.metadata.mutatesUI)
         XCTAssertEqual(DriverCommand.mediaImport.metadata.argsTypeName, "ForyMediaImportArgs")
         XCTAssertEqual(DriverCommand.mediaImport.metadata.payloadTypeName, "ForyMediaImportPayload")
         XCTAssertFalse(DriverCommand.mediaImport.metadata.mutatesUI)

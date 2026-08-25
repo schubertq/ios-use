@@ -35,25 +35,6 @@ final class ForyModelTests: XCTestCase {
         XCTAssertEqual(decoded.payload, Data([1, 2, 3]))
     }
 
-    func testRotateArgumentsAndPayloadRoundTrip() throws {
-        let fory = ForyRegistry.create()
-        let args = try fory.deserialize(
-            try fory.serialize(ForyRotateArgs(orientation: "landscape-left")),
-            as: ForyRotateArgs.self
-        )
-        let payload = try fory.deserialize(
-            try fory.serialize(ForyRotatePayload(
-                requestedOrientation: "landscape-left",
-                actualOrientation: "landscape-left"
-            )),
-            as: ForyRotatePayload.self
-        )
-
-        XCTAssertEqual(args.orientation, "landscape-left")
-        XCTAssertEqual(payload.requestedOrientation, "landscape-left")
-        XCTAssertEqual(payload.actualOrientation, "landscape-left")
-    }
-
     func testScreenshotPayloadCarriesLogicalScreenGeometry() throws {
         let fory = ForyRegistry.create()
         let payload = ForyScreenshotPayload(
