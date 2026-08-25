@@ -89,7 +89,7 @@ bytes. To install a
 specific version:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/xhzq233/ios-use/main/scripts/install.sh | bash -s -- --version v2.0.3
+curl -fsSL https://raw.githubusercontent.com/xhzq233/ios-use/main/scripts/install.sh | bash -s -- --version v2.0.4
 ```
 
 Intel Macs are unsupported because the Mac Runtime and converted iPhone Apps
@@ -249,7 +249,7 @@ updates it when needed. Every Mac App includes the Frida debug Engine, so
 `ios-use debug` is always available. Later, `start --mac` launches the current
 App remembered by this `IOS_USE_HOME` without requiring its source path.
 
-v2.0.3 does not migrate or auto-launch Mac Apps installed by older versions, and
+v2.0.4 does not migrate or auto-launch Mac Apps installed by older versions, and
 it never deletes old caches for you. After upgrading, stop any running Mac
 session and run `start --mac --app` once for each Bundle you want to keep using.
 Run `ios-use du` to see leftover caches you can remove yourself.
@@ -266,12 +266,16 @@ Lifecycle remains host-owned: `activateApp`, `terminateApp`, `home`, and DDI
 operations are explicitly unsupported while a Mac session is active.
 
 The Runtime presents the App in an opaque, rectangular Simulator-style host
-with the standard AppKit title bar, traffic lights, shadow, and four-edge
-proportional resize behavior. The scene-owning UIKitMacHelper window is kept
-instead of adding a second mirror window. There is no transparent gap or
-synthetic toolbar; one uniformly scaled render canvas fills the content area.
-The inner UIKit canvas remains fixed at 430 x 932 logical points regardless of
-host size. Host decoration is never a target coordinate or evidence.
+with the standard AppKit title bar, traffic lights, and shadow. The
+scene-owning UIKitMacHelper window is kept instead of adding a second mirror
+window. Its content is a fixed 430 x 932 logical-point canvas and the window
+is not resizable. Catalyst owns the on-screen presentation size and Retina
+backing; ios-use does not wrap or visually scale the content view. There is no
+transparent gap or synthetic toolbar. Host decoration is never a target
+coordinate or evidence.
+Set `IOS_USE_PLAY_ENABLE_3X_BACKING=1` on `ios-use start --mac` to request a
+3x scene backing for that launch. When omitted, Catalyst chooses the Retina
+backing.
 Screenshots capture only the target process's complete canvas compositor
 surfaces, including Metal, and always produce a strict 1290 x 2796 frame. The
 Runtime never draws synthetic time, battery, Dynamic Island, status glyphs, or
